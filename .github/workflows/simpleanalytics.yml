@@ -1,0 +1,31 @@
+name: Scrape latest Simple Analytics data
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 * * * *'
+
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out this repo
+      uses: actions/checkout@v2
+    - name: Fetch latest data
+      env:
+        SA_USER_ID: ${{ secrets.SA_USER_ID }}
+        SA_API_KEY: ${{ secrets.SA_API_KEY }}
+      run: |-
+        ./scrape-simple-analytics.sh > export.csv
+        ./filter-simple-analytics.sh > corp-referrers.csv
+        rm export.csv || true
+    - name: Commit and push if it changed
+      run: |-
+        git config user.name "Automated"
+        git config user.email "actions@users.noreply.github.com"
+        git add -A
+        timestamp=$(date -u)
+        git commit -m "Latest SimpleAnalytics data: ${timestamp}" || exit 0
+        git pull --rebase
+        git push

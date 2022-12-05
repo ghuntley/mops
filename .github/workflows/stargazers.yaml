@@ -1,0 +1,29 @@
+name: Scrape latest Stargazers data
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 * * * *'
+
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out this repo
+      uses: actions/checkout@v2
+    - name: Fetch latest data
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |-
+        ./scrape-stargazers-ghuntley-mops.sh
+    - name: Commit and push if it changed
+      run: |-
+        git config user.name "Automated"
+        git config user.email "actions@users.noreply.github.com"
+        git add -A
+        timestamp=$(date -u)
+
+        git commit -m "Latest Stargazers data: ${timestamp}" || exit 0
+        git pull --rebase
+        git push
